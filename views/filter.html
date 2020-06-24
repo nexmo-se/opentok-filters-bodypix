@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>OpenTok - Background Blur</title>
+  <style>
+    body {
+      margin: 0;
+      width: 100%;
+    }
+
+    #main {
+        width: 100%;
+        height: 100%;
+        
+      }
+
+
+  </style>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
+    <!-- Load BodyPix -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
+</head>
+<body onload="bindPage()">
+	<div id="main" style="">
+		<div id="layoutContainer" style="position:absolute;background:black;margin-left:10%;margin-right:10%;top:2%;width:80%;height:80%">
+		</div>
+    <div id="controls" style="position:absolute;background: grey;margin-left: 10%;margin-right: 10%;top:82%;width:80%;height:53px">
+      <div style="margin-left:45%;margin-right:50%;width: 120px;position: absolute;margin-top:2px">
+        <img id="micon" src="assets/mic-on.png" style="width:48px;height:48px;margin-right:2px" onclick="muteUnmuteMic()"/>
+        <img id="micoff" src="assets/mic-off.png" style="width:48px;height:48px;display: none;margin-right:2px" onclick="muteUnmuteMic()"/>
+        <img id="camon" src="assets/cam-on.png" style="width:48px;height:48px" onclick="muteUnmuteCam()" />
+        <img id="camoff" src="assets/cam-off.png" style="width:48px;height:48px;display: none;" onclick="muteUnmuteCam()"/>
+      </div>
+      <!--div style="left: 10%;width: 100px;position: absolute;margin-top:10px">
+         <div id="brightnessdiv">
+          <input type="range" id="brightness" name="brightness" min="-50" max="50" value="0" onchange="changeBrightness()">
+          <label for="volume">Face brightness</label>
+        </div>
+      </div-->
+      <div style="right: 30%;width: 100px;position: absolute;margin-top:10px">
+        <div class="select">
+          <select name="slct" id="mode" onchange="changeFilter()">
+            <option value="MODE_BLUR" selected>Background Blur</option>
+            <option value="MODE_COLORPOP">Color pop</option>
+            <option value="MODE_PIXELATE">Pixelate</option>
+            <option value="MODE_BGIMAGE">Background Image</option>
+            <option value="MODE_BGVIDEO">Background Video</option>
+             
+          </select>
+        </div>
+      </div>
+      <div style="right: 10%;width: 100px;position: absolute;margin-top:10px">
+        <div id="bluramtdiv">
+          <input type="range" id="bluramount" name="bluramount" min="1" max="20" value="5" onchange="changeBlurAmount()">
+          <label for="volume">Blur amount</label>
+        </div>
+        <div id="pixelamtdiv" style="display:none">
+          <input type="range" id="pixelamount" name="pixelamount" min="0.01" max="0.2" value="0.05" step="0.01" onchange="changePixelAmount()">
+          <label for="volume">Pixel factor</label>
+        </div>
+        <div class="select" id="videoselect" style="display: none">
+          <select name="videoname" id="videoname" onchange="changeVideo()">
+            <option value="colors">Color Splash</option>
+            <option value="bevel" selected>Beveled Buttons</option>
+            <option value="surfing">Surfing</option>
+            <option value="pixels">Pixels</option>
+            <option value="ferriswheel">Ferris Wheel</option>
+            <option value="goldengate">Golden Gate</option>
+            <option value="water">Water</option>
+          </select>
+        </div>
+        <div class="select" id="imageselect" style="display: none">
+          <select name="imagename" id="imagename" onchange="changeImage()">
+            <option value="wall" selected>Wall</option>
+            <option value="starwars">Starwars</option>
+            <option value="wood">Wood</option>
+            <option value="office">Office</option>
+            <option value="bookshelf">Book Shelf</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="filter.js"></script>
+  <script>
+   var layoutContainer = document.getElementById("layoutContainer");
+   var layout = undefined;
+   $.getScript("https://static.opentok.com/v2/js/opentok.min.js", (data, textStatus, jqxhr) => {
+    $.getScript("opentok-layout.min.js", () => {
+      // Initialize the layout container and get a reference to the layout method
+      layout = initLayoutContainer(layoutContainer, {
+        animate: {
+          duration: 500,
+          easing: "swing"
+        },
+        fixedRatio: true,
+        bigFixedRatio: false,
+        bigClass: "big"
+      }).layout;
+    });
+  });
+</script>
+</body>
+</html>

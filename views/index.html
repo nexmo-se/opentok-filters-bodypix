@@ -1,0 +1,233 @@
+
+<html>
+<head>
+  <title>Layout Container Example</title>
+  <!-- <script src="https://static.opentok.com/v2/js/opentok.min.js"></script> -->
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <style type="text/css" media="screen">
+    #layoutContainer {
+      width: 100%;
+      height: 100%;
+      position:relative;
+    }
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color:#262422;
+    }
+    #layoutContainer > div {
+        background-color: #000;
+        display: inline-block;
+
+        transition-property: all;
+        transition-duration: 0.5s;
+    }
+
+    body > div#description {
+        color: #333;
+        margin: 0;
+        width: 100%;
+        text-align: center;
+    }
+    #clock {
+      color: white;
+      text-align: right;
+      position: absolute;
+      bottom: 50px;
+      right: 0px;
+    }
+    #control{
+      color: black;
+      text-align: center;
+      position: absolute;
+      bottom: 0px;
+      right: 0px;
+      height:50px;
+      width:100%;
+      background:white;
+    }
+    </style>
+    <script>
+    function startTime() {
+        var now = new Date();
+        document.getElementById('clock').innerHTML = now.toISOString();
+        var t = setTimeout(startTime, 10);
+    }
+    </script>
+</head>
+<body onload="startTime();">
+  <div id="layoutContainer"></div>
+  <div id="clock"></div>
+  <div id="control">
+  
+      <img onclick="muteUnmuteMic()" id="micon" src="assets/mic-on.png" style="width:50px;height:50px"/>
+      <img onclick="muteUnmuteMic()" id="micoff" src="assets/mic-off.png" style="width:50px;height:50px;display:none"/>
+      <img id="camon" onclick="muteUnmuteCam()" src="assets/cam-on.png" style="width:50px;height:50px"/>
+      <img id="camoff" onclick="muteUnmuteCam()" src="assets/cam-off.png" style="width:50px;height:50px;display:none"/>
+      <img id="s" style="" onclick="startScreenShare()" src="assets/screenshare.png" style="width:50px;height:50px"/>
+    
+  </div>
+</body>
+<script type="text/javascript" charset="utf-8">
+  var layoutContainer = document.getElementById("layoutContainer");
+  var layout = undefined;
+  var isMicMuted = false;
+  var isCamMuted = false;
+  var publisher = undefined;
+  var session = undefined;
+  $(window).resize(function() {
+    layout();
+  });
+  function getQueryParams(qs) {
+      qs = qs.split("+").join(" ");
+      var params = {},
+          tokens,
+          re = /[?&]?([^=]+)=([^&]*)/g;
+
+      while (tokens = re.exec(qs)) {
+          params[decodeURIComponent(tokens[1])]
+              = decodeURIComponent(tokens[2]);
+      }
+
+      return params;
+  }
+
+  var $_GET = getQueryParams(document.location.search);
+
+  var otUrl;
+  if ($_GET['env'] === 'tbdev') {
+    otUrl = "https://tbdev.tokbox.com/v2/js/opentok.js";
+  } else {
+    otUrl = "https://static.opentok.com/v2/js/opentok.min.js";
+  }
+
+  if ($_GET['disableClock'] === 'true') {
+    document.getElementById('clock').style.display = 'none';
+  }
+
+  function start(){
+    $.get("/token", function(data){
+      try{
+        connect(data);
+      }
+      catch(e){
+        console.log(data);
+        alert("Error" + e)
+      }
+    });
+  }
+  function handleError(error) {
+    if (error) {
+      alert(error.message);
+    }
+  }
+  
+  function startScreenShare(){
+    var spublisher = OT.initPublisher('layoutContainer',
+      {videoSource: 'screen',
+    		insertMode: 'append'
+  		},
+      function(error) {
+        if (error) {
+          // Look at error.message to see what went wrong.
+        } else {
+          session.publish(spublisher, function(error) {
+            if (error) {
+              // Look error.message to see what went wrong.
+            }
+            layout();
+          });
+        }
+      }
+    );
+    spublisher.on('streamDestroyed', function(event) {
+      if (event.reason === 'mediaStopped') {
+        
+      } else if (event.reason === 'forceUnpublished') {
+        // A moderator forced the user to stop sharing.
+        
+      }
+      setTimeout(function(){layout()},2000);
+    });
+    spublisher.on('mediaStopped', function(event) {
+      // The user clicked stop
+      layout();
+    });
+  }
+  function muteUnmuteMic(){
+    if(isMicMuted){
+      isMicMuted = false;
+      publisher.publishAudio(true);
+      $("#micon").css("display", "inline-block");
+      $("#micoff").css("display", "none");
+    }
+    else {
+      isMicMuted = true;
+      publisher.publishAudio(false);
+      $("#micon").css("display", "none");
+      $("#micoff").css("display", "inline-block");
+    }
+    return isMicMuted;
+  }
+  function muteUnmuteCam(){
+    if(isCamMuted){
+      isCamMuted = false;
+      publisher.publishVideo(true);
+      $("#camon").css("display", "inline-block");
+      $("#camoff").css("display", "none");
+    }
+    else {
+      isCamMuted = true;
+      publisher.publishVideo(false);
+      $("#camon").css("display", "none");
+      $("#camoff").css("display", "inline-block");
+    }
+    return isCamMuted;
+  }
+  function connect(params){
+      session = OT.initSession(params.apikey, params.sessionid);
+      session.on("streamCreated", function(event){
+        var subscriber = session.subscribe(event.stream, "layoutContainer", {
+          insertMode: "append"
+        });
+        if (event.stream.videoType === 'screen') {
+          $(subscriber.element).addClass('big');
+        }
+        subscriber.on('destroyed', e => {
+          layout();
+        });
+        layout();
+      });
+    
+      publisher = OT.initPublisher('layoutContainer', {
+    		insertMode: 'append'
+  		}, handleError);
+    
+      session.connect(params.token, function (err) {
+        if (err) {
+      			handleError(err);
+    		} else {
+      			session.publish(publisher, handleError);
+            layout();
+    		}
+      });
+  }
+  // ugly: sequentially load interdependent scripts
+  $.getScript(otUrl, (data, textStatus, jqxhr) => {
+    $.getScript("opentok-layout.min.js", () => {
+      // Initialize the layout container and get a reference to the layout method
+      layout = initLayoutContainer(layoutContainer, {
+        animate: {
+          duration: 500,
+          easing: "swing"
+        },
+        fixedRatio: true,
+        bigFixedRatio: false,
+        bigClass: "big"
+      }).layout;
+      
+      start();
+    });
+  });
+
+</script>
+</html>
