@@ -1,5 +1,5 @@
-# opentok-ar-filters
-Filters using BodyPix library
+# opentok-filters-bodypix
+Filters using Google BodyPix library
 
 1. add your opentok credentials in server.js. this demo uses a fixed session-id and generates tokens for this session-id
 2. "npm install" to install dependencies
