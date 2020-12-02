@@ -15,6 +15,7 @@ var bgImageData = undefined;
 var isMicMuted = false;
 var isCamMuted = false;
 
+var focusTimer = undefined;
 var tempcanvas = undefined;
 var canvas = undefined;
 
@@ -147,7 +148,7 @@ function muteUnmuteMic(){
   }
 
 function start(){
-    $.get("/token", function(data){
+    $.get("/opentokFilters/token", function(data){
       try{
         token = data.token;
         sessionId = data.sessionid;
@@ -213,12 +214,25 @@ function startPublishing(){
       });
 
 }
+
+function onFocusChange(){
+	if(document.hidden){
+		console.log("Starting timer");
+      		focusTimer = setInterval(function(){bodySegmentationFrame()},50);
+	}
+	else{
+		console.log("Stopping timer");
+		clearInterval(focusTimer);
+	}
+}
+
 async function bindPage() {
   canvas = document.createElement("canvas");
   tempcanvas = document.createElement("canvas");
   bgvideocanvas = document.createElement("canvas");
   bgvideocanvas.height = FRAME_HEIGHT;
-  bgvideocanvas.width = FRAME_WIDTH
+  bgvideocanvas.width = FRAME_WIDTH;
+  document.addEventListener("visibilitychange", onFocusChange);
   // Load the BodyPix model weights with architecture 0.75
   net = await bodyPix.load({
     architecture: props.architecture,
@@ -246,9 +260,9 @@ async function bindPage() {
     bgvideo.muted = true;
     bgvideo.loop = true;
     bgvideo.onloadedmetadata = function() {
-      console.log("Metadata for video loaded");
-      segmentBodyInRealTime();
-      start();
+      	console.log("Metadata for video loaded");
+  	segmentBodyInRealTime();     
+	start();
     };
   });
 
@@ -362,6 +376,9 @@ function pixelateBg(map){
    ctx.putImageData(newImg, 0, 0);
 }
 function segmentBodyInRealTime() {
+	bodySegmentationFrame();
+	requestAnimationFrame(segmentBodyInRealTime);
+}
   // since images are being fed from a webcam
   async function bodySegmentationFrame() {
 
@@ -402,11 +419,9 @@ function segmentBodyInRealTime() {
             doBgVideo(multiPersonSegmentation.data,bgData);
         }
     }
-    requestAnimationFrame(bodySegmentationFrame);
+    //requestAnimationFrame(bodySegmentationFrame);
   }
 
-  bodySegmentationFrame();
-}
 
 async function estimateSegmentation(image) {
   	let multiPersonSegmentation = null;
