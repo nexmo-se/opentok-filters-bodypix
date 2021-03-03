@@ -19,11 +19,12 @@
   </style>
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
   <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.2.0"></script>
     <!-- Load BodyPix -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.1.0"></script>
 </head>
 <body onload="bindPage()">
+    
 	<div id="main" style="">
 		<div id="layoutContainer" style="position:absolute;background:black;margin-left:10%;margin-right:10%;top:2%;width:80%;height:80%">
 		</div>
@@ -49,6 +50,13 @@
             <option value="MODE_BGIMAGE">Background Image</option>
             <option value="MODE_BGVIDEO">Background Video</option>
              
+          </select>
+        </div>
+      </div>
+      <div style="right: 80%;width: 100px;position: absolute;margin-top:10px">
+        <div class="select">
+          <select name="camera" id="camera" onchange="changeCamera()">
+            
           </select>
         </div>
       </div>

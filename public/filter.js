@@ -18,7 +18,7 @@ var isCamMuted = false;
 var focusTimer = undefined;
 var tempcanvas = undefined;
 var canvas = undefined;
-
+var cameraChanging = false;
 var MODE_BLUR = 1;
 var MODE_BGIMAGE = 2;
 var MODE_BGVIDEO = 3;
@@ -148,7 +148,7 @@ function muteUnmuteMic(){
   }
 
 function start(){
-    $.get("/opentokFilters/token", function(data){
+    $.get("/token", function(data){
       try{
         token = data.token;
         sessionId = data.sessionid;
@@ -226,6 +226,15 @@ function onFocusChange(){
 	}
 }
 
+async function populateCameras(){
+    let cameras = await getVideoInputs();
+    var options = "";
+    cameras.forEach(camera => {
+        options += "<option value='"+camera.label+"'>"+camera.label+"</option>"
+    })
+    document.getElementById("camera").innerHTML = options;
+    return cameras;
+}
 async function bindPage() {
   canvas = document.createElement("canvas");
   tempcanvas = document.createElement("canvas");
@@ -240,7 +249,9 @@ async function bindPage() {
     multiplier: props.multiplier,
     quantBytes: props.quantBytes
   });
-  await loadVideo(null);
+
+  var cameras = await populateCameras();
+  await loadVideo(cameras[0].label);
   document.getElementById('main').style.display = 'inline-block';
   
   /*load the bg image and video */
@@ -269,6 +280,13 @@ async function bindPage() {
   img.src = 'assets/wall.jpg';
 }
 
+async function changeCamera(){
+    cameraChanging = true;
+    var cam = document.getElementById("camera").value;
+    console.log(cam);
+    await loadVideo(cam);
+    cameraChanging = false;
+}
 function doBgImage(map,mask){
   const tempctx = tempcanvas.getContext('2d');
   const { data:imgData } = tempctx.getImageData(0, 0, tempcanvas.width, tempcanvas.height);
@@ -381,7 +399,8 @@ function segmentBodyInRealTime() {
 }
   // since images are being fed from a webcam
   async function bodySegmentationFrame() {
-
+    if(cameraChanging)
+        return;
     if(currentMode == MODE_BLUR){
         const multiPersonSegmentation = await estimateSegmentation(video);
         bodyPix.drawBokehEffect(
@@ -442,6 +461,7 @@ async function getVideoInputs() {
   }
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter(device => device.kind === 'videoinput');
+  console.log(videoDevices);
   return videoDevices;
 }
 
