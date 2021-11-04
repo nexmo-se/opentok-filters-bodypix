@@ -1,3 +1,5 @@
+This library is superseded by https://www.npmjs.com/package/@vonage/video-effects
+
 # opentok-filters-bodypix
 Filters using Google BodyPix library
 
